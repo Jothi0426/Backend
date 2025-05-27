@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon app.js",
+    "dev": "node server.js",
     "build": "echo 'No build step required'",
     "test": "echo 'No tests specified'"
   },

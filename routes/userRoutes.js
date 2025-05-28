@@ -3,7 +3,7 @@ const router = express.Router();
 
 const {
   register,
-  loginUser,
+  //loginUser,
   getIntakeProgress,
   insertTasks,
   getWeeklyNutritionSummary,
@@ -14,7 +14,7 @@ const { upload, createProfile } = require('../controllers/profileController');
 
 router.post('/register', register);
 
-router.post('/login', loginUser);
+// router.post('/login', loginUser);
 
 router.get('/intake_progres', getIntakeProgress);
 router.post('/tasks', insertTasks);

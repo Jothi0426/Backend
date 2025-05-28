@@ -264,9 +264,10 @@
 
 
 
-
+// const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const pool = require('../db'); // Ensure db.js is correct
+// const JWT_SECRET = 'b4N7$gYp@2rT!kX9zFqM#vJ5wL8dC6H9';
 
 const register = async (req, res) => {
   try {
@@ -292,38 +293,39 @@ const register = async (req, res) => {
 
 
 
-const loginUser = async (req, res) => {
 
-  console.log("Login request body:", req.body); // Debugging line
-  try {
-    const { username, password } = req.body;
+// const loginUser = async (req, res) => {
 
-    if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
-    }
+//   console.log("Login request body:", req.body); // Debugging line
+//   try {
+//     const { username, password } = req.body;
 
-    const result = await pool.query(
-      "SELECT hashed_password FROM testdata WHERE username = $1",
-      [username]
-    );
+//     if (!username || !password) {
+//       return res.status(400).json({ error: "Username and password are required" });
+//     }
 
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
+//     const result = await pool.query(
+//       "SELECT hashed_password FROM testdata WHERE username = $1",
+//       [username]
+//     );
 
-    const hashedPassword = result.rows[0].hashed_password;
-    const isMatch = await bcrypt.compare(password, hashedPassword);
+//     if (result.rows.length === 0) {
+//       return res.status(401).json({ error: "Invalid username or password" });
+//     }
 
-    if (!isMatch) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
+//     const hashedPassword = result.rows[0].hashed_password;
+//     const isMatch = await bcrypt.compare(password, hashedPassword);
 
-    res.json({ message: "Login successful" });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
+//     if (!isMatch) {
+//       return res.status(401).json({ error: "Invalid username or password" });
+//     }
+//    const token = jwt.sign({ username: username },JWT_SECRET,{ expiresIn: "1h" }, // Token valid for 1 hour  
+//      res.json({ message: "Login successful" , token }));
+//   } catch (error) {
+//     console.error("Login error:", error);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };
 
 const getIntakeProgress = async (req, res) => {
   try {
@@ -338,25 +340,7 @@ const getIntakeProgress = async (req, res) => {
   }
 };
 
-// const insertTasks = async (req, res) => {
-//   try {
-//     const { sleep, hydration, fat, protein, vegetables, exercise, fiber, probiotics } = req.body;
-
-//     const result = await pool.query(
-//       "INSERT INTO tasks (sleep, hydration, fat, protein, vegetables, exercise, fiber, probiotics) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-//       [sleep, hydration, fat, protein, vegetables, exercise, fiber, probiotics]
-//     );
-
-//     res.status(201).json({ message: "Data inserted successfully", data: result.rows[0] });
-//   } catch (error) {
-//     console.error("Error inserting task:", error);
-//     res.status(500).json({ message: "Internal Server Error" });
-//   }
-// };
-
-
-
-const insertTasks = async (req, res) => {
+  const insertTasks = async (req, res) => {
   try {
     let { sleep, hydration, fat, protein, vegetables, exercise, fiber, probiotics } = req.body;
 
@@ -383,12 +367,6 @@ const insertTasks = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
-
-
-
-
-
 
 
 
@@ -438,9 +416,12 @@ const getWeeklyLifestyleSummary = async (req, res) => {
   }
 };
 
+
+
+
 module.exports = {
   register,
-  loginUser,
+  //loginUser,
   getIntakeProgress,
   insertTasks,
   getWeeklyNutritionSummary,

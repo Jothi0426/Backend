@@ -1,51 +1,20 @@
-//SQL code 
+const mongoose = require('mongoose');
 
-// const sql = require('mssql');
+const connectDB = async () => {
+const username = 'Nithya';
+const password = encodeURIComponent('sxTw_hMfv#37iQh');
+const cluster = 'cluster0.z7nbp.mongodb.net';
+const dbname = 'drivermap';
 
-// const config = {
-//   user: 'sa',
-//   password: 'jothi@12',
-//   server: 'SPCHNGL113',
-//   database: 'Mobileapp',
-//   port: 1433,  // Default SQL Server port
-//   options: {
-//     encrypt: false,
-//     enableArithAbort: true,
-//     trustServerCertificate: true,
-//   },
-// };
-
-// const poolPromise = new sql.ConnectionPool(config)
-//   .connect()
-//   .then((pool) => {
-//     console.log('✅ Connected to SQL Server');
-//     return pool;
-//   })
-//   .catch((err) => console.error('❌ Database Connection Failed!', err));
-
-// module.exports = { sql, poolPromise };
+const uri = `mongodb+srv://${username}:${password}@${cluster}/${dbname}?retryWrites=true&w=majority&appName=Cluster0`;
 
 
-require('dotenv').config(); // Load env variables
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-
-    ssl: {
-    rejectUnauthorized: false // Required by Render's PostgreSQL
+  try {
+    await mongoose.connect(uri);
+    console.log('✅ MongoDB connected');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
   }
-});
+};
 
-pool.connect()
-  .then(() => console.log("✅ Connected to PostgreSQL"))
-  .catch(err => console.error("❌ Database connection error:", err));
-
-module.exports = pool;
-
-
-
+module.exports = connectDB;

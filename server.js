@@ -3,26 +3,27 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./db');
+const mapRoutes = require('./routes/mapRoutes');
+const socketHandler = require('./controllers/socketController');
 
 const app = express();
-app.use(cors());
-connectDB();
-
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
 });
 
-const { handleSocketConnection } = require('./controllers/locationController');
+connectDB();
+
+app.use(cors());
+app.use(express.json());
+app.use('/', mapRoutes);
 
 io.on('connection', (socket) => {
-  handleSocketConnection(io, socket); // ✅ This connects to the frontend socket
+  console.log('📡 Client connected:', socket.id);
+  socketHandler(io, socket);
 });
 
-app.use('/auth', require('./routes/userRoutes'));
-
-
-const PORT = 5000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running at http://0.0.0.0:${PORT}`);
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

@@ -18,3 +18,6 @@ const uri = `mongodb+srv://${username}:${password}@${cluster}/${dbname}?retryWri
 };
 
 module.exports = connectDB;
+
+
+

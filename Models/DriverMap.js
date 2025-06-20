@@ -6,7 +6,7 @@ const driverSchema = new mongoose.Schema({
   latitude: Number,
   longitude: Number,
   status: { type: String, default: 'available' },
-  updatedAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
 });
 
 driverSchema.pre('save', async function (next) {
@@ -20,4 +20,4 @@ driverSchema.pre('save', async function (next) {
   next();
 });
 
-module.exports = mongoose.model('drivermap', driverSchema);
+module.exports = mongoose.model('DriverMap', driverSchema);

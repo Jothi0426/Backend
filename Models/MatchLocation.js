@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('../db');
 
 const matchLocationSchema = new mongoose.Schema({
   driver_id: Number,
@@ -8,4 +8,4 @@ const matchLocationSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model('MatchLocation', matchLocationSchema);
+module.exports = mongoose.model('matchlocations', matchLocationSchema);

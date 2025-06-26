@@ -1,4 +1,4 @@
-const mongoose = require('../db');
+const mongoose = require('mongoose');
 
 const counterSchema = new mongoose.Schema({
   _id: { type: String, required: true },

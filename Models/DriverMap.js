@@ -21,7 +21,7 @@
 // });
 
 // module.exports = mongoose.model('DriverMap', driverSchema);
-const mongoose = require('../db');
+const mongoose = require('mongoose');
 const Counter = require('./Counter');
 
 const driverSchema = new mongoose.Schema({

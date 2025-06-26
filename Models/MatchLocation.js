@@ -1,4 +1,4 @@
-const mongoose = require('../db');
+const mongoose = require('mongoose');
 
 const matchLocationSchema = new mongoose.Schema({
   driver_id: Number,

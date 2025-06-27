@@ -1,6 +1,6 @@
-const UserMap = require('../models/UserMap');
-const DriverMap = require('../models/DriverMap');
-const MatchLocation = require('../models/MatchLocation');
+const UserMap = require('../Models/UserMap');
+const DriverMap = require('../Models/DriverMap');
+const MatchLocation = require('../Models/MatchLocation');
 
 exports.getUserMap = async (req, res) => {
   try {

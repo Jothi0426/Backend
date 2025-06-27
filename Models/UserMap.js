@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
+const mongoose = require('../db');
 const Counter = require('./Counter');
 
 const userSchema = new mongoose.Schema({
   user_id: { type: Number, unique: true },
   latitude: Number,
   longitude: Number,
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 userSchema.pre('save', async function (next) {

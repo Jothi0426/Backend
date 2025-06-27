@@ -1,6 +1,6 @@
-const UserMap = require('../Models/UserMap');
-const DriverMap = require('../Models/DriverMap');
-const MatchLocation = require('../Models/MatchLocation');
+const UserMap = require('../models/UserMap');
+const DriverMap = require('../models/DriverMap');
+const MatchLocation = require('../models/MatchLocation');
 
 exports.getUserMap = async (req, res) => {
   try {
@@ -22,8 +22,8 @@ exports.getDriverMap = async (req, res) => {
 
 exports.getMatchLocations = async (req, res) => {
   try {
-    const locations = await MatchLocation.find();
-    res.json(locations);
+    const matches = await MatchLocation.find();
+    res.json(matches);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

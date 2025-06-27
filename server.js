@@ -1,10 +1,12 @@
 const express = require('express');
-const cors = require('cors');
 const http = require('http');
+const cors = require('cors');
 const { Server } = require('socket.io');
-require('./db'); // connect MongoDB
 
-const socketController = require('./controllers/socketController');
+require('./db'); // MongoDB connection
+
+const mapRoutes = require('./routes/mapRoutes'); // Importing map routes
+const { socketHandler } = require('./controllers/socketController');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,14 +16,11 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
-app.use('/', require('./routes/mapRoutes'));
+app.use('/', mapRoutes);
 
-io.on('connection', (socket) => {
-  console.log('📡 Client connected:', socket.id);
-  socketController.handleSocketEvents(io, socket);
-});
+socketHandler(io); // socket controller
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`🚀 Server running on http://localhost:${PORT}`)
-);
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});

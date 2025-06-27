@@ -9,6 +9,6 @@ const uri = `mongodb+srv://${username}:${password}@${cluster}/${dbname}?retryWri
 
 mongoose.connect(uri)
   .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 module.exports = mongoose;

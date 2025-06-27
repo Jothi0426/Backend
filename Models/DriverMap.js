@@ -21,7 +21,7 @@
 // });
 
 // module.exports = mongoose.model('DriverMap', driverSchema);
-const mongoose = require('mongoose');
+const mongoose = require('../db');
 const Counter = require('./Counter');
 
 const driverSchema = new mongoose.Schema({
@@ -29,7 +29,7 @@ const driverSchema = new mongoose.Schema({
   latitude: Number,
   longitude: Number,
   status: { type: String, default: 'available' },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
 });
 
 driverSchema.pre('save', async function (next) {

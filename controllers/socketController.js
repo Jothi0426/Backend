@@ -2,14 +2,16 @@ const UserMap = require('../Models/UserMap');
 const DriverMap = require('../Models/DriverMap');
 const MatchLocation = require('../Models/MatchLocation');
 
-exports.handleSocketEvents = (io, socket) => {
+exports.handleSocketConnection = (io, socket) => {
+  console.log('📡 Client connected:', socket.id);
+
   socket.on('update-user-location', async (data) => {
     try {
       const { latitude, longitude } = data;
       const user = new UserMap({ latitude, longitude });
       await user.save();
-      io.emit('usermapUpdate', user);
 
+      io.emit('usermapUpdate', user);
       io.emit('ride-request', {
         message: 'New ride request',
         user_latitude: latitude,
@@ -55,6 +57,10 @@ exports.handleSocketEvents = (io, socket) => {
     } catch (err) {
       console.error('❌ Error updating driver location:', err.message);
     }
+  });
+
+  socket.on('ride-accepted', (data) => {
+    io.emit('ride-accepted', data);
   });
 
   socket.on('disconnect', () => {

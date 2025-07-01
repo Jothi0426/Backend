@@ -1,9 +1,8 @@
-
 const UserMap = require('../Models/UserMap');
 const DriverMap = require('../Models/DriverMap');
 const MatchLocation = require('../Models/MatchLocation');
 
-exports.getUsers = async (req, res) => {
+exports.getAllUsers = async (req, res) => {
   try {
     const users = await UserMap.find();
     res.json(users);
@@ -12,7 +11,7 @@ exports.getUsers = async (req, res) => {
   }
 };
 
-exports.getDrivers = async (req, res) => {
+exports.getAllDrivers = async (req, res) => {
   try {
     const drivers = await DriverMap.find();
     res.json(drivers);
@@ -21,7 +20,7 @@ exports.getDrivers = async (req, res) => {
   }
 };
 
-exports.getMatches = async (req, res) => {
+exports.getAllMatches = async (req, res) => {
   try {
     const matches = await MatchLocation.find();
     res.json(matches);

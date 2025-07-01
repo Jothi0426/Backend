@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const mapController = require('../controllers/mapController'); // ✅ path relative to this file
+const controller = require('../controllers/mapController');
 
-router.get('/usermap', mapController.getUserMap);
-router.get('/drivermap', mapController.getDriverMap);
-router.get('/matchlocations', mapController.getMatchLocations);
+router.get('/usermap', controller.getUsers);
+router.get('/drivermap', controller.getDrivers);
+router.get('/matchlocations', controller.getMatches);
 
 module.exports = router;

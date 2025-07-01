@@ -7,8 +7,13 @@ const dbname = 'drivermap';
 
 const uri = `mongodb+srv://${username}:${password}@${cluster}/${dbname}?retryWrites=true&w=majority&appName=Cluster0`;
 
-mongoose.connect(uri)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(uri);
+    console.log('✅ MongoDB connected');
+  } catch (err) {
+    console.error('❌ MongoDB connection error:', err.message);
+  }
+};
 
-module.exports = mongoose;
+module.exports = connectDB;

@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
-const connectDB = require('./config/db');
+const connectDB = require('./db');
 const mapRoutes = require('./routes/mapRoutes');
 const { handleSocketConnection } = require('./controllers/socketController');
 

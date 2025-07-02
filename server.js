@@ -31,7 +31,6 @@
 //   console.log(`🚀 Server running on http://localhost:${PORT}`);
 // });
 
-
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -50,7 +49,7 @@ mongoose.connect(uri)
   .then(() => console.log('✅ MongoDB connected'))
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-// ==== Schemas ====
+// ==== Mongoose Schemas and Models ====
 const counterSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   seq: { type: Number, default: 0 },
@@ -141,6 +140,11 @@ app.get('/matchlocations', async (req, res) => {
   }
 });
 
+// ==== Utility Function ====
+function generateOTP() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
 // ==== Socket.IO ====
 io.on('connection', (socket) => {
   console.log('📡 Client connected:', socket.id);
@@ -165,7 +169,6 @@ io.on('connection', (socket) => {
   socket.on('update-driver-location', async (data) => {
     try {
       const { driver_id, latitude, longitude, status } = data;
-
       const matchLog = new MatchLocation({ driver_id, latitude, longitude, status });
       await matchLog.save();
 
@@ -199,14 +202,12 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ✅ Ride Accepted with OTP generation
   socket.on('ride-accepted', (data) => {
     const otp = generateOTP();
     const payload = {
       ...data,
-      otp, // 👈 Send OTP to User App
+      otp,
     };
-    console.log('✅ Driver accepted ride. OTP:', otp);
     io.emit('ride-accepted', payload);
   });
 
@@ -215,10 +216,7 @@ io.on('connection', (socket) => {
   });
 });
 
-function generateOTP() {
-  return Math.floor(1000 + Math.random() * 9000); // 4-digit
-}
-
+// ==== Start Server ====
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`🚀 Server running on http://localhost:${PORT}`)

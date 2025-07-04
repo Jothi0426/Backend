@@ -231,7 +231,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const fetch = require('node-fetch'); // Ensure this is installed
 
 // ==== MongoDB Connection ====
 const username = 'Nithya';
@@ -246,7 +245,6 @@ mongoose.connect(uri)
   .catch((err) => console.error('❌ MongoDB connection error:', err));
 
 // ==== Mongoose Schemas and Models ====
-
 const counterSchema = new mongoose.Schema({
   _id: { type: String, required: true },
   seq: { type: Number, default: 0 },
@@ -310,7 +308,6 @@ app.use(cors());
 app.use(express.json());
 
 // ==== REST APIs ====
-
 app.get('/usermap', async (req, res) => {
   try {
     const users = await UserMap.find();
@@ -338,33 +335,22 @@ app.get('/matchlocations', async (req, res) => {
   }
 });
 
-// ==== Expo Push Token Management ====
-const userTokens = {}; // key: socket.id, value: expoPushToken
-
 // ==== Socket.IO ====
-
 io.on('connection', (socket) => {
   console.log('📡 Client connected:', socket.id);
-
-  socket.on('store-push-token', ({ token }) => {
-    userTokens[socket.id] = token;
-    console.log('✅ Stored Expo Push Token:', token);
-  });
 
   socket.on('update-user-location', async (data) => {
     try {
       const { latitude, longitude } = data;
       const user = new UserMap({ latitude, longitude });
       await user.save();
-
       io.emit('usermapUpdate', user);
+
       io.emit('ride-request', {
         message: 'New ride request',
         user_latitude: latitude,
         user_longitude: longitude,
       });
-
-      console.log(`📨 Ride request sent from user (${latitude}, ${longitude})`);
     } catch (err) {
       console.error('❌ Error saving user location:', err.message);
     }
@@ -407,50 +393,15 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('ride-accepted', async (data) => {
-    const otp = Math.floor(1000 + Math.random() * 9000).toString(); // generate 4-digit OTP
-    const rideData = { ...data, otp };
-    console.log(`✅ Ride accepted, OTP: ${otp}`);
-
-    io.emit('ride-accepted', rideData);
-
-    // Send Push Notification to all stored user tokens
-    for (const token of Object.values(userTokens)) {
-      await sendPushNotification(token, `Your driver accepted the ride. OTP: ${otp}`);
-    }
+  socket.on('ride-accepted', (data) => {
+    console.log('✅ Ride accepted');
+    io.emit('ride-accepted', data);
   });
 
   socket.on('disconnect', () => {
     console.log('❌ Client disconnected:', socket.id);
-    delete userTokens[socket.id]; // cleanup token
   });
 });
-
-// ==== Push Notification Sender ====
-
-async function sendPushNotification(token, message) {
-  try {
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Accept-encoding': 'gzip, deflate',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        to: token,
-        sound: 'default',
-        title: 'Ride Accepted',
-        body: message,
-      }),
-    });
-
-    const resJson = await response.json();
-    console.log('📬 Notification sent:', resJson);
-  } catch (err) {
-    console.error('❌ Failed to send push notification:', err.message);
-  }
-}
 
 // ==== Start Server ====
 const PORT = process.env.PORT || 5000;

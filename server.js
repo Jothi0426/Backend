@@ -1478,11 +1478,17 @@ app.post('/register-user-token', async (req, res) => {
     res.status(500).send('Failed to store token');
   }
 });
-
 app.post('/verify-otp', async (req, res) => {
   const { driver_id, user_id, otp } = req.body;
+  console.log('🔐 OTP Verification request:', { driver_id, user_id, otp });
   try {
     const record = await OTPModel.findOne({ driver_id, user_id }).sort({ createdAt: -1 });
+    if (record) {
+      console.log('✅ OTP record found:', record);
+    } else {
+      console.warn('⚠️ No OTP record found for:', { driver_id, user_id });
+    }
+
     if (record && record.otp === otp) {
       return res.json({ success: true });
     } else {
@@ -1493,6 +1499,7 @@ app.post('/verify-otp', async (req, res) => {
     return res.status(500).json({ success: false });
   }
 });
+
 
 app.get('/usermap', async (req, res) => {
   try {
@@ -1534,6 +1541,7 @@ io.on('connection', (socket) => {
       io.emit('usermapUpdate', user);
       io.emit('ride-request', {
         message: 'New ride request',
+         user_id: user.user_id, // <- this is missing!
         user_latitude: latitude,
         user_longitude: longitude,
       });
@@ -1616,3 +1624,4 @@ const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`🚀 Server running on http://localhost:${PORT}`)
 );
+

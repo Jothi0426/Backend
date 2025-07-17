@@ -196,6 +196,12 @@
 // io.on('connection', (socket) => {
 //   console.info('📡 Client connected:', socket.id);
 
+
+//     socket.on('user-destination', (data) => {
+//     console.log(`📍 Received destination from user: ${data.destination}`);
+//     io.emit('destination-for-driver', data);
+//   });
+
 //   socket.on('update-user-location', async (data) => {
 //     try {
 //       const { latitude, longitude } = data;
@@ -293,264 +299,249 @@
 // });
 
 
-// server.js
- 
 const express = require('express');
-
 const mongoose = require('mongoose');
-
 const cors = require('cors');
-
 const http = require('http');
-
 const { Server } = require('socket.io');
+const fetch = require('node-fetch');
 
-const bodyParser = require('body-parser');
+// ==== MongoDB Connection ====
+const username = 'Nithya';
+const password = encodeURIComponent('sxTw_hMfv#37iQh');
+const cluster = 'cluster0.z7nbp.mongodb.net';
+const dbname = 'drivermap';
+const uri = `mongodb+srv://${username}:${password}@${cluster}/${dbname}?retryWrites=true&w=majority&appName=Cluster0`;
 
-const axios = require('axios');
- 
-const app = express();
+mongoose.connect(uri)
+  .then(() => console.info('✅ MongoDB connected'))
+  .catch((err) => console.error('❌ MongoDB connection error:', err));
 
-const server = http.createServer(app);
+// ==== Schemas ====
+const counterSchema = new mongoose.Schema({ _id: String, seq: Number });
+const Counter = mongoose.model('counter', counterSchema);
 
-const io = new Server(server, {
-
-  cors: {
-
-    origin: '*',
-
-  },
-
+const userSchema = new mongoose.Schema({
+  user_id: { type: Number, unique: true },
+  latitude: Number,
+  longitude: Number,
+  updatedAt: { type: Date, default: Date.now },
+  pushToken: String,
 });
- 
-app.use(cors());
+userSchema.pre('save', async function (next) {
+  if (!this.isNew) return next();
+  const counter = await Counter.findByIdAndUpdate(
+    { _id: 'user_id' },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  this.user_id = counter.seq;
+  next();
+});
+const UserMap = mongoose.model('usermap', userSchema);
 
-app.use(bodyParser.json());
- 
-// ===== MongoDB Connection =====
-
-mongoose.connect(
-
-  'mongodb+srv://Nithya:sxTw_hMfv%2337iQh@cluster0.z7nbp.mongodb.net/usermap',
-
-  {
-
-    useNewUrlParser: true,
-
-    useUnifiedTopology: true,
-
-  }
-
-);
- 
-// ===== Mongoose Schemas =====
-
-const UserMap = mongoose.model('UserMap', new mongoose.Schema({
-
+const driverSchema = new mongoose.Schema({
+  driver_id: { type: Number, unique: true },
   latitude: Number,
-
   longitude: Number,
+  status: { type: String, default: 'available' },
+  updatedAt: { type: Date, default: Date.now },
+});
+driverSchema.pre('save', async function (next) {
+  if (!this.isNew) return next();
+  const counter = await Counter.findByIdAndUpdate(
+    { _id: 'driver_id' },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  this.driver_id = counter.seq;
+  next();
+});
+const DriverMap = mongoose.model('drivermap', driverSchema);
 
-  destination: {
-
-    latitude: Number,
-
-    longitude: Number,
-
-  },
-
-  timestamp: { type: Date, default: Date.now },
-
-}));
- 
-const DriverMap = mongoose.model('DriverMap', new mongoose.Schema({
-
+const matchLocationSchema = new mongoose.Schema({
+  driver_id: Number,
   latitude: Number,
-
   longitude: Number,
-
+  status: String,
   timestamp: { type: Date, default: Date.now },
+});
+const MatchLocation = mongoose.model('matchlocations', matchLocationSchema);
 
-}));
- 
-const OTPModel = mongoose.model('OTPModel', new mongoose.Schema({
-
-  driver_id: String,
-
-  user_id: String,
-
+const otpSchema = new mongoose.Schema({
+  driver_id: Number,
+  user_id: Number,
   otp: String,
-
-}));
- 
-// ===== Routes =====
-
-app.get('/', (req, res) => {
-
-  res.send('🚗 Ride Booking Server is running...');
-
+  createdAt: { type: Date, default: Date.now, expires: 300 },
 });
- 
-app.get('/drivermap', async (req, res) => {
+const OTPModel = mongoose.model('otp', otpSchema);
 
-  const data = await DriverMap.find().sort({ timestamp: -1 }).limit(1);
-
-  res.json(data[0]);
-
+// ==== Express Setup ====
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
 });
- 
-app.get('/usermap', async (req, res) => {
 
-  const data = await UserMap.find().sort({ timestamp: -1 }).limit(1);
+app.use(cors());
+app.use(express.json());
 
-  res.json(data[0]);
+// ==== REST Routes ====
 
+app.post('/register-user-token', async (req, res) => {
+  const { token, user_id } = req.body;
+  try {
+    const user = await UserMap.findOneAndUpdate(
+      { user_id },
+      { pushToken: token },
+      { upsert: true, new: true }
+    );
+    console.info(`✅ Push token registered for user_id ${user_id}`);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('❌ Error registering push token:', err.message);
+    res.status(500).send('Failed to store token');
+  }
 });
- 
-// ===== Socket.IO Handlers =====
+
+app.post('/verify-otp', async (req, res) => {
+  const { driver_id, user_id, otp } = req.body;
+  try {
+    const record = await OTPModel.findOne({ driver_id, user_id }).sort({ createdAt: -1 });
+    if (record && record.otp === otp) {
+      return res.json({ success: true });
+    } else {
+      return res.json({ success: false });
+    }
+  } catch (err) {
+    console.error('❌ OTP verification error:', err.message);
+    res.status(500).json({ success: false });
+  }
+});
+
+app.get('/usermap', async (_, res) => {
+  try {
+    const users = await UserMap.find();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/drivermap', async (_, res) => {
+  try {
+    const drivers = await DriverMap.find();
+    res.json(drivers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/matchlocations', async (_, res) => {
+  try {
+    const matches = await MatchLocation.find();
+    res.json(matches);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==== SOCKET.IO Events ====
 
 io.on('connection', (socket) => {
+  console.info('📡 Client connected:', socket.id);
 
-  console.log('🔌 A client connected:', socket.id);
- 
-  // === USER SHARES PICKUP & DESTINATION ===
+  socket.on('user-destination', (data) => {
+    console.log('📍 Destination from user:', data);
+    io.emit('destination-for-driver', data);
+  });
 
   socket.on('update-user-location', async (data) => {
-
     try {
-
-      const { latitude, longitude, destination } = data;
- 
-      const user = new UserMap({
-
-        latitude,
-
-        longitude,
-
-        destination,
-
-      });
- 
+      const { latitude, longitude } = data;
+      const user = new UserMap({ latitude, longitude });
       await user.save();
- 
+
       io.emit('usermapUpdate', user);
- 
       io.emit('ride-request', {
-
         message: 'New ride request',
-
-        user_id: user._id,
-
+        user_id: user.user_id,
         user_latitude: latitude,
-
         user_longitude: longitude,
-
-        user_destination: destination,
-
       });
- 
-      console.log('📍 User ride request broadcasted:', user._id);
-
-    } catch (error) {
-
-      console.error('❌ Error in update-user-location:', error.message);
-
+    } catch (err) {
+      console.error('❌ Saving user location failed:', err.message);
     }
-
   });
- 
-  // === DRIVER LOCATION UPDATE ===
 
   socket.on('update-driver-location', async (data) => {
-
     try {
+      const { driver_id, latitude, longitude, status } = data;
 
-      const { latitude, longitude } = data;
- 
-      const driver = new DriverMap({ latitude, longitude });
+      const matchLog = new MatchLocation({ driver_id, latitude, longitude, status });
+      await matchLog.save();
 
-      await driver.save();
- 
-      io.emit('drivermapUpdate', driver);
+      const driver = await DriverMap.findOneAndUpdate(
+        { driver_id },
+        { latitude, longitude, status, updatedAt: Date.now() },
+        { new: true, upsert: true }
+      );
 
-    } catch (error) {
+      io.emit('driver-location', driver);
 
-      console.error('❌ Error in update-driver-location:', error.message);
-
+      const users = await UserMap.find();
+      for (const user of users) {
+        socket.emit('possibleMatch', {
+          driver_id: driver.driver_id,
+          driver_latitude: latitude,
+          driver_longitude: longitude,
+          user_id: user.user_id,
+          user_latitude: user.latitude,
+          user_longitude: user.longitude,
+        });
+      }
+    } catch (err) {
+      console.error('❌ Updating driver location failed:', err.message);
     }
-
   });
- 
-  // === DRIVER ACCEPTS RIDE ===
 
   socket.on('ride-accepted', async (data) => {
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const rideData = { ...data, otp };
 
     try {
+      await OTPModel.create({ driver_id: data.driver_id, user_id: data.user_id, otp });
+      io.emit('ride-accepted', rideData);
 
-      const otp = Math.floor(1000 + Math.random() * 9000).toString();
- 
-      const rideData = {
-
-        ...data, // includes driver_id, user_id, user_latitude, user_longitude, user_destination, fare, distance
-
-        otp,
-
-      };
- 
-      await OTPModel.create({
-
-        driver_id: data.driver_id,
-
-        user_id: data.user_id,
-
-        otp,
-
-      });
- 
-      io.emit('ride-accepted', rideData); // broadcast to all
- 
-      // Optional: Push Notification
-
-      const notification = {
-
-        to: data.expoPushToken,
-
-        sound: 'default',
-
-        title: '🚕 Ride Accepted',
-
-        body: `Your ride has been accepted. OTP: ${otp}`,
-
-      };
- 
-      await axios.post('https://exp.host/--/api/v2/push/send', notification);
- 
-      console.log('✅ Ride accepted and OTP sent:', rideData);
-
-    } catch (error) {
-
-      console.error('❌ Error in ride-accepted:', error.message);
-
+      const user = await UserMap.findOne({ user_id: data.user_id });
+      if (user?.pushToken) {
+        await fetch('https://exp.host/--/api/v2/push/send', {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Accept-encoding': 'gzip, deflate',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: user.pushToken,
+            sound: 'default',
+            title: 'Ride Accepted',
+            body: `Your driver accepted the ride. OTP: ${otp}`,
+          }),
+        });
+      }
+    } catch (err) {
+      console.error('❌ Ride accepted error:', err.message);
     }
-
   });
- 
+
   socket.on('disconnect', () => {
-
-    console.log('❌ Client disconnected:', socket.id);
-
+    console.info('❌ Client disconnected:', socket.id);
   });
-
 });
- 
-// ===== Start Server =====
 
-const PORT = 3000;
-
+// ==== Start Server ====
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-
-  console.log(`🚀 Server running on port ${PORT}`);
-
+  console.info(`🚀 Server running on http://localhost:${PORT}`);
 });
-
- 

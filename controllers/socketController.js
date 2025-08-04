@@ -1,9 +1,16 @@
 // const UserMap = require('../Models/UserMap');
 // const DriverMap = require('../Models/DriverMap');
 // const MatchLocation = require('../Models/MatchLocation');
+// const OTPModel = require('../Models/OTP');
+// const fetch = require('node-fetch');
 
-// exports.handleSocketConnection = (io, socket) => {
-//   console.log('📡 Client connected:', socket.id);
+// module.exports = async function handleSocket(io, socket) {
+//   console.info('📡 Client connected:', socket.id);
+
+//   socket.on('user-destination', (data) => {
+//     console.log('📍 Destination from user:', data);
+//     io.emit('destination-for-driver', data);
+//   });
 
 //   socket.on('update-user-location', async (data) => {
 //     try {
@@ -11,14 +18,17 @@
 //       const user = new UserMap({ latitude, longitude });
 //       await user.save();
 
+      
+
 //       io.emit('usermapUpdate', user);
 //       io.emit('ride-request', {
 //         message: 'New ride request',
+//         user_id: user.user_id,
 //         user_latitude: latitude,
 //         user_longitude: longitude,
 //       });
 //     } catch (err) {
-//       console.error('❌ Error saving user location:', err.message);
+//       console.error('❌ Saving user location failed:', err.message);
 //     }
 //   });
 
@@ -29,17 +39,11 @@
 //       const matchLog = new MatchLocation({ driver_id, latitude, longitude, status });
 //       await matchLog.save();
 
-//       let driver;
-//       if (driver_id) {
-//         driver = await DriverMap.findOneAndUpdate(
-//           { driver_id },
-//           { latitude, longitude, status, updatedAt: Date.now() },
-//           { new: true, upsert: true }
-//         );
-//       } else {
-//         driver = new DriverMap({ latitude, longitude, status });
-//         await driver.save();
-//       }
+//       const driver = await DriverMap.findOneAndUpdate(
+//         { driver_id },
+//         { latitude, longitude, status, updatedAt: Date.now() },
+//         { new: true, upsert: true }
+//       );
 
 //       io.emit('driver-location', driver);
 
@@ -55,15 +59,46 @@
 //         });
 //       }
 //     } catch (err) {
-//       console.error('❌ Error updating driver location:', err.message);
+//       console.error('❌ Updating driver location failed:', err.message);
 //     }
 //   });
 
-//   socket.on('ride-accepted', (data) => {
-//     io.emit('ride-accepted', data);
+//   socket.on('ride-accepted', async (data) => {
+//     const otp = Math.floor(1000 + Math.random() * 9000).toString();
+//     const rideData = { ...data, otp };
+
+//     try {
+//       await OTPModel.create({ driver_id: data.driver_id, user_id: data.user_id, otp });
+//       io.emit('ride-accepted', rideData);
+
+//       const user = await UserMap.findOne({ user_id: data.user_id });
+//       if (user?.pushToken) {
+//         await fetch('https://exp.host/--/api/v2/push/send', {
+//           method: 'POST',
+//           headers: {
+//             Accept: 'application/json',
+//             'Accept-encoding': 'gzip, deflate',
+//             'Content-Type': 'application/json',
+//           },
+//           body: JSON.stringify({
+//             to: user.pushToken,
+//             sound: 'default',
+//             title: 'Ride Accepted',
+//             body: `Your driver accepted the ride. OTP: ${otp}`,
+//           }),
+//         });
+//       }
+//     } catch (err) {
+//       console.error('❌ Ride accepted error:', err.message);
+//     }
+//   });
+
+//   socket.on('ride-completed', ({ user_id }) => {
+//     console.log(`✅ Ride completed for user_id: ${user_id}`);
+//     io.emit('ride-completed', { user_id });
 //   });
 
 //   socket.on('disconnect', () => {
-//     console.log('❌ Client disconnected:', socket.id);
+//     console.info('❌ Client disconnected:', socket.id);
 //   });
 // };

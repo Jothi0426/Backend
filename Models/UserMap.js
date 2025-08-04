@@ -1,4 +1,4 @@
-// const mongoose = require('mongoose');
+// const mongoose = require('../db');
 // const Counter = require('./Counter');
 
 // const userSchema = new mongoose.Schema({
@@ -6,6 +6,7 @@
 //   latitude: Number,
 //   longitude: Number,
 //   updatedAt: { type: Date, default: Date.now },
+//   pushToken: String,
 // });
 
 // userSchema.pre('save', async function (next) {

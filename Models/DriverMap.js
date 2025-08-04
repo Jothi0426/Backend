@@ -1,4 +1,4 @@
-// const mongoose = require('mongoose');
+// const mongoose = require('../db');
 // const Counter = require('./Counter');
 
 // const driverSchema = new mongoose.Schema({

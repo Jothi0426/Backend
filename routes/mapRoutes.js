@@ -1,9 +1,11 @@
 // const express = require('express');
 // const router = express.Router();
-// const mapController = require('../controllers/mapController');
+// const controller = require('../controllers/mapController');
 
-// router.get('/usermap', mapController.getAllUsers);
-// router.get('/drivermap', mapController.getAllDrivers);
-// router.get('/matchlocations', mapController.getAllMatches);
+// router.post('/register-user-token', controller.registerUserToken);
+// router.post('/verify-otp', controller.verifyOTP);
+// router.get('/usermap', controller.getUserMap);
+// router.get('/drivermap', controller.getDriverMap);
+// router.get('/matchlocations', controller.getMatchLocations);
 
 // module.exports = router;

@@ -244,7 +244,28 @@ io.on('connection', (socket) => {
       console.error('❌ Ride accepted error:', err.message);
     }
   });
-  
+
+  // 🔼 NEW: Handle route updates from driver
+
+socket.on('driver-route-update', ({ user_id, route }) => {
+
+  console.log(`🛣️ Route update from driver for user ${user_id}`);
+ 
+  // Find the assigned driver socket for this user
+
+  const driverSocketId = rideMap.get(user_id);
+ 
+  // Forward the route to the user app
+
+  io.emit('driver-route-update', { route });
+ 
+  // ⚠️ Optional: if you want to only send to that specific user
+
+  // io.to(userSocketId).emit('driver-route-update', { route });
+
+});
+
+ 
 //New 
       socket.on('ride-completed', ({ user_id }) => {
     console.log(`✅ Ride completed for user_id: ${user_id}`);
